@@ -26,8 +26,6 @@ import io.crate.expression.symbol.MatchPredicate;
 import io.crate.expression.symbol.Symbol;
 import io.crate.expression.symbol.SymbolVisitor;
 import io.crate.expression.symbol.Symbols;
-import io.crate.expression.symbol.format.SymbolPrinter;
-import io.crate.types.DataTypes;
 
 import javax.annotation.Nullable;
 import java.util.Locale;
@@ -42,15 +40,6 @@ public class GroupBySymbolValidator {
 
     public static void validateForDistinctRewrite(Symbol symbol) throws IllegalArgumentException, UnsupportedOperationException {
         INNER_VALIDATOR.process(symbol, new Context("Cannot use DISTINCT on '%s': invalid data type '%s'"));
-    }
-
-    private static void validateDataType(Symbol symbol, String errorMesage) {
-        if (!DataTypes.PRIMITIVE_TYPES.contains(symbol.valueType())) {
-            throw new IllegalArgumentException(
-                String.format(Locale.ENGLISH, errorMesage,
-                    SymbolPrinter.INSTANCE.printUnqualified(symbol),
-                    symbol.valueType()));
-        }
     }
 
     private static class Context {
@@ -101,18 +90,7 @@ public class GroupBySymbolValidator {
 
         @Override
         protected Void visitSymbol(Symbol symbol, Context context) {
-            // If is literal no further datatype validation is required
-            if (Symbols.allLiterals(symbol)) {
-                return null;
-            }
-
-            if (context.parentScalar == null) {
-                validateDataType(symbol, context.invalidTypeErrorMessage);
-            } else {
-                validateDataType(context.parentScalar, context.invalidTypeErrorMessage);
-            }
             return null;
         }
     }
-
 }
